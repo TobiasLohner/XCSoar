@@ -211,6 +211,14 @@ UpdateInfoBoxCircleDiameter(InfoBoxData &data)
   data.SetValue (buffer);
   data.SetValueUnit(unit);
 
+  const fixed circle_duration = fixed (360) / fabs(CommonInterface::Calculated().turn_rate_smoothed);
+
+  StaticString<16> duration_buffer;
+  duration_buffer.Format(_T("%u s"), int(circle_duration));
+  _tcscpy (buffer, duration_buffer);
+  data.SetComment (buffer);
+
+
 }
 
 
