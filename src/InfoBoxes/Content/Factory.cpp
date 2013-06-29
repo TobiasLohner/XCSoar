@@ -1242,8 +1242,8 @@ static constexpr MetaData meta_data[] = {
 
   {
     N_("Circle Diameter"),
-    N_("Circle Diameter"),
-    N_("Cirle diameter. Useful for evaluating best thermalling mode with a glider."),
+    N_("Circle D"),
+    N_("Cirle diameter. Displays estimated circle diameter and full circle flight time. Useful for evaluating best thermalling mode with a glider at different wing loading."),
     UpdateInfoBoxCircleDiameter,
     CIRCLE_DIAMETER,
     CIRCLE_DIAMETER,
