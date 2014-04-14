@@ -144,18 +144,21 @@ namespace SkyLinesTracking {
      * to a bad key in a PING packet.
      */
     static const uint32_t FLAG_BAD_KEY = 0x1;
+    static const uint32_t FLAG_FIX_ACK = 0x2;
 
     Header header;
 
     /**
-     * Copy of the request's id value.
+     * Copy of the request's id value. In case of a FIX_ACK, this contains
+     * the lower 2 bytes of the last fix time received.
      */
     uint16_t id;
 
     /**
-     * Reserved for future use.  Set to zero.
+     * If this is a FIX_ACK packet, this contains the upper two bytes
+     * of the last fix time received. Otherwise unused and set to zero.
      */
-    uint16_t reserved;
+    uint16_t value;
 
     uint32_t flags;
   };
