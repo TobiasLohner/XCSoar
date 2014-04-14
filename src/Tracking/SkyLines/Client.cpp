@@ -295,7 +295,10 @@ SkyLinesTracking::Client::OnDatagramReceived(void *data, size_t length)
     break;
 
   case ACK:
-    handler->OnAck(FromBE16(ack.id));
+    if (FromBE32(ack.flags) & ACKPacket::FLAG_FIX_ACK)
+      last_fix_received = FromBE32(ack.id | ack.value << 16);
+    else
+      handler->OnAck(FromBE16(ack.id));
     break;
 
   case TRAFFIC_RESPONSE:

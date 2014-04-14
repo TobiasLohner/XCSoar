@@ -54,6 +54,12 @@ namespace SkyLinesTracking {
     SocketAddress address;
     SocketDescriptor socket;
 
+    /**
+     * Time in milliseconds of the last fix that was received and
+     * ack'ed by SkyLines
+     */
+    unsigned last_fix_received;
+
   public:
     Client()
       :
