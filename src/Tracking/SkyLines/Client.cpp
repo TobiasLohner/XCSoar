@@ -168,9 +168,43 @@ SkyLinesTracking::Client::SendFix(const NMEAInfo &basic)
 
   // Store this packet in the delta queue.
   StoreDeltaPacket(packet);
-  packet.header.crc = ToBE16(UpdateCRC16CCITT(&packet, sizeof(packet), 0));
 
-  return socket.Write(&packet, sizeof(packet), address) == sizeof(packet);
+  unsigned num_delta_fixes = 0;
+  unsigned absolute_fix_time = FromBE32(packet.time);
+
+  // Calculate buffer size
+  for (auto it = delta_fixes.rbegin(); it != delta_fixes.rend(); ++it) {
+    absolute_fix_time -= FromBE16((*it).time);
+
+    // stop if we reached the last fix which was acknowledged by SkyLines
+    if (absolute_fix_time <= last_fix_received)
+      break;
+
+    num_delta_fixes++;
+  }
+
+  assert(num_delta_fixes <= MAX_DELTA_FIXES);
+
+  const unsigned buffer_size = sizeof(packet) + sizeof(DeltaFix) * num_delta_fixes;
+  char *buffer = new char[buffer_size];
+
+  packet.num_delta_fixes = uint8_t(num_delta_fixes);
+  memcpy(buffer, &packet, sizeof(packet));
+
+  unsigned i = 0;
+  for (auto it = delta_fixes.rbegin(); i < num_delta_fixes; ++it, ++i) {
+    DeltaFix delta_fix = *it;
+    memcpy(buffer + sizeof(packet) + sizeof(delta_fix) * i, &delta_fix, sizeof(delta_fix));
+  }
+
+  assert(num_delta_fixes < std::numeric_limits<uint8_t>::max());
+  reinterpret_cast<FixPacket*>(buffer)->header.crc = ToBE16(UpdateCRC16CCITT(buffer, buffer_size, 0));
+
+  bool success = socket.Write(buffer, buffer_size, address) == buffer_size;
+
+  delete[] buffer;
+
+  return success;
 }
 
 bool
