@@ -78,6 +78,38 @@ public:
     }
   };
 
+  class const_reverse_iterator {
+    friend class TrivialOverwritingRingBuffer;
+
+    const TrivialOverwritingRingBuffer &buffer;
+    unsigned i;
+
+    const_reverse_iterator(const TrivialOverwritingRingBuffer<T, size> &_buffer, unsigned _i)
+      :buffer(_buffer), i(_i) {
+      assert(i < size);
+    }
+
+  public:
+    const T &operator*() const {
+      return buffer.data[i];
+    }
+
+    typename TrivialOverwritingRingBuffer::const_reverse_iterator &operator++() {
+      i = buffer.previous(i);
+      return *this;
+    }
+
+    bool operator==(const const_reverse_iterator &other) const {
+      assert(&buffer == &other.buffer);
+      return i == other.i;
+    }
+
+    bool operator!=(const const_reverse_iterator &other) const {
+      assert(&buffer == &other.buffer);
+      return i != other.i;
+    }
+  };
+
 protected:
   T data[size];
   unsigned head, tail;
@@ -164,6 +196,21 @@ public:
    */
   const_iterator end() const {
     return const_iterator(*this, tail);
+  }
+
+  /**
+   * Returns a pointer to the newest item.
+   */
+  const_reverse_iterator rbegin() const {
+    return const_reverse_iterator(*this, previous(tail));
+  }
+
+  /**
+   * Returns a pointer to the front of the buffer (one item before
+   * the oldest item).
+   */
+  const_reverse_iterator rend() const {
+    return const_reverse_iterator(*this, previous(head));
   }
 
   unsigned capacity() const {
