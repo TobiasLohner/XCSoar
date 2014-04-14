@@ -25,9 +25,11 @@ Copyright_License {
 #define XCSOAR_TRACKING_SKYLINES_CLIENT_HPP
 
 #include "Handler.hpp"
+#include "Protocol.hpp"
 #include "OS/SocketAddress.hpp"
 #include "OS/SocketDescriptor.hpp"
 #include "IO/Async/FileEventHandler.hpp"
+#include "Util/OverwritingRingBuffer.hpp"
 
 #include <stdint.h>
 
@@ -49,10 +51,25 @@ namespace SkyLinesTracking {
     Handler *handler;
 #endif
 
+    // The tracking key
     uint64_t key;
+
+    // Flag if we stored a previous packet already
+    bool last_packet_valid;
 
     SocketAddress address;
     SocketDescriptor socket;
+
+    static constexpr unsigned MAX_DELTA_FIXES = 40;
+
+    /**
+     * List of delta fixes. Maximum is 40 to keep the total UDP packet size
+     * at roundabout 1000 bytes.
+     */
+    OverwritingRingBuffer<DeltaFix, MAX_DELTA_FIXES> delta_fixes;
+
+    // The last packet sent, store it to calculate the next delta packet
+    FixPacket last_packet;
 
     /**
      * Time in milliseconds of the last fix that was received and
@@ -66,7 +83,7 @@ namespace SkyLinesTracking {
 #ifdef HAVE_SKYLINES_TRACKING_HANDLER
       io_thread(nullptr), handler(nullptr),
 #endif
-      key(0) {}
+      key(0), last_packet_valid(false) {}
     ~Client() { Close(); }
 
     constexpr
@@ -94,6 +111,8 @@ namespace SkyLinesTracking {
     bool SendPing(uint16_t id);
     bool SendTrafficRequest(bool followees, bool club);
     bool SendUserNameRequest(uint32_t user_id);
+
+    void StoreDeltaPacket(FixPacket &packet);
 
 #ifdef HAVE_SKYLINES_TRACKING_HANDLER
   private:

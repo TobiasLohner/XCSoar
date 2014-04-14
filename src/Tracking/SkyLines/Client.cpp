@@ -33,6 +33,7 @@ Copyright_License {
 #include "Util/ConvertString.hpp"
 
 #include <string>
+#include <limits>
 
 void
 SkyLinesTracking::Client::SetIOThread(IOThread *_io_thread)
@@ -165,6 +166,8 @@ SkyLinesTracking::Client::SendFix(const NMEAInfo &basic)
   } else
     packet.engine_noise_level = 0;
 
+  // Store this packet in the delta queue.
+  StoreDeltaPacket(packet);
   packet.header.crc = ToBE16(UpdateCRC16CCITT(&packet, sizeof(packet), 0));
 
   return socket.Write(&packet, sizeof(packet), address) == sizeof(packet);
@@ -227,6 +230,47 @@ SkyLinesTracking::Client::SendUserNameRequest(uint32_t user_id)
   packet.header.crc = ToBE16(UpdateCRC16CCITT(&packet, sizeof(packet), 0));
 
   return socket.Write(&packet, sizeof(packet), address) == sizeof(packet);
+}
+
+void
+SkyLinesTracking::Client::StoreDeltaPacket(FixPacket &packet)
+{
+  if (!last_packet_valid) {
+    last_packet = packet;
+    last_packet_valid = true;
+    return;
+  }
+
+  // Check for worst-case scenario first: our new packet is too far away from
+  // the last delta packet, thus invalidating all previous delta packets :-(
+
+  uint32_t delta_time = uint32_t(FromBE32(packet.time)) - uint32_t(FromBE32(last_packet.time));
+  int32_t delta_latitude = FromBE32(packet.location.latitude) - FromBE32(last_packet.location.latitude);
+  int32_t delta_longitude = FromBE32(packet.location.longitude) - FromBE32(last_packet.location.longitude);
+
+  if (delta_time > std::numeric_limits<uint16_t>::max() ||
+      abs(delta_latitude) > std::numeric_limits<int16_t>::max() ||
+      abs(delta_longitude) > std::numeric_limits<int16_t>::max()) {
+    delta_fixes.clear();
+    last_packet = packet;
+    return;
+  }
+
+  DeltaFix delta_fix;
+
+  delta_fix.flags = last_packet.flags;
+  delta_fix.time = ToBE16(uint16_t(delta_time));
+  delta_fix.location.latitude = ToBE16(int16_t(delta_latitude));
+  delta_fix.location.longitude = ToBE16(int16_t(delta_longitude));
+  delta_fix.track = last_packet.track;
+  delta_fix.ground_speed = last_packet.ground_speed;
+  delta_fix.airspeed = last_packet.airspeed;
+  delta_fix.altitude = last_packet.altitude;
+  delta_fix.vario = last_packet.vario;
+  delta_fix.engine_noise_level = last_packet.engine_noise_level;
+
+  delta_fixes.push(delta_fix);
+  last_packet = packet;
 }
 
 #ifdef HAVE_SKYLINES_TRACKING_HANDLER
