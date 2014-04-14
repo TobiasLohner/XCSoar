@@ -240,6 +240,79 @@ namespace SkyLinesTracking {
   static_assert(sizeof(FixPacket) == 48, "Wrong struct size");
 #endif
 
+  struct DeltaGeoPoint {
+    /**
+     * Angle delta to the last fix in micro degrees. Positive means north or east.
+     */
+    int16_t latitude, longitude;
+  };
+
+#ifdef __cplusplus
+  static_assert(sizeof(DeltaGeoPoint) == 4, "Wrong struct size");
+#endif
+
+  /**
+   * A delta GPS fix to be appended to the FixPacket.
+   */
+  struct DeltaFix {
+    static const uint32_t FLAG_LOCATION = 0x1;
+    static const uint32_t FLAG_TRACK = 0x2;
+    static const uint32_t FLAG_GROUND_SPEED = 0x4;
+    static const uint32_t FLAG_AIRSPEED = 0x8;
+    static const uint32_t FLAG_ALTITUDE = 0x10;
+    static const uint32_t FLAG_VARIO = 0x20;
+    static const uint32_t FLAG_ENL = 0x40;
+
+    uint32_t flags;
+
+    /**
+     * Delta time in milliseconds since the last fix.
+     */
+    uint16_t time;
+
+    DeltaGeoPoint location;
+
+    /**
+     * Reserved for future use.
+     */
+    uint16_t reserved;
+
+    /**
+     * Ground track in degrees (0..359).
+     */
+    uint16_t track;
+
+    /**
+     * Ground speed in m/16s.
+     */
+    uint16_t ground_speed;
+
+    /**
+     * Indicated air speed in m/16s.
+     */
+    uint16_t airspeed;
+
+    /**
+     * Altitude in m above MSL.
+     */
+    int16_t altitude;
+
+    /**
+     * Vertical speed in m/256s.
+     */
+    int16_t vario;
+
+    /**
+     * Engine noise level value from the logger, valid range is
+     * 0..999.
+     */
+    uint16_t engine_noise_level;
+  };
+
+#ifdef __cplusplus
+  static_assert(sizeof(DeltaFix) == 24, "Wrong struct size");
+#endif
+
   /**
    * The client requests traffic information.
    */
