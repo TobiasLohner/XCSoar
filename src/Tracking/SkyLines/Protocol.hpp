@@ -200,9 +200,15 @@ namespace SkyLinesTracking {
     GeoPoint location;
 
     /**
+     * Number of delta fixes appended.
+     */
+    uint8_t num_delta_fixes;
+
+    /**
      * Reserved for future use.  Set to zero.
      */
-    uint32_t reserved;
+    uint8_t reserved;
+    uint16_t reserved2;
 
     /**
      * Ground track in degrees (0..359).
