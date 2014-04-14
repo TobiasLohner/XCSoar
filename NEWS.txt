@@ -16,6 +16,8 @@ Version 6.8 - not yet released
 * task editor
   - added one-click task reversal (#1730)
   - show name of loaded/saved tasks in dialog title (#1924)
+* tracking
+  - more reliable SkyLines tracking on weak mobile connections
 * user interface 
   - checklist remembers last opened list (#3110)
   - display rotation for Raspberry Pi and Cubieboard (#3238)
