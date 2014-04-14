@@ -43,11 +43,11 @@ namespace SkyLinesTracking {
        */
       uint32_t time_of_day_ms;
 
-      GeoPoint location;
+      ::GeoPoint location;
       int altitude;
 
       Traffic() = default;
-      constexpr Traffic(uint32_t _time, GeoPoint _location,
+      constexpr Traffic(uint32_t _time, ::GeoPoint _location,
                         int _altitude)
         :time_of_day_ms(_time),
          location(_location), altitude(_altitude) {}
